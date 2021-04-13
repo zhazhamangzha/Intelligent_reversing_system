@@ -14,5 +14,6 @@
 	#include "12864.h"
 	#include "exti.h"
 	#include "timer.h"
+	#include "stm.h"
 
 #endif
