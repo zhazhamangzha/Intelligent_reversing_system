@@ -1,18 +1,27 @@
 /************************************************************
-**	  PWM输出 实验
-**  接线  ： 从PA1输出PWM信号。	
-**github 测试
-**LSY push
+ * 智能倒车系统IRS
+ * 硬件连接：
+ * PA：电机板J3
+ * PB：开关板J3
+ * PC：蜂鸣器（不需要连线）
+ * PD：LCDJ2
+ * PE：超声波J2
 *************************************************************/
 
 #include "CONFIG.H"	 	 
 
-u16 time=0,speed=0;
-u8 dis[7]={0},pwm_disp[4]={0};
+//变量声明
+u16 force=0,sw=0;//力度force，总开关sw
+float distance;//距离distance
+u16 time=0,speed=0,alpha=901;//time测速计时，speed速度，alpha占空比
+u8 dis[7]={0};
+
+//函数声明
+void PWM_Speed_Control();//电机速度控制
+
 int main(void)
-{		
- 	u16 pwmval=0;
-	u8 dir=1,i;	
+{
+	//初始化
  	Stm32_Clock_Init(9);   //系统时钟设置
 	delay_init(72);	       //延时初始化
 	uart_init(72,9600);    //串口初始化 
@@ -20,28 +29,14 @@ int main(void)
 	EXTIX_Init();         //外部中断初始化
 	Timerx_Init(500,7199);//10Khz的计数频率，计数到500为50ms  
 	Init_12864();
-  while(1)
+
+  	while(1)
 	{
- 		delay_ms(10);	 
+ 		delay_ms(10);
 
-/*********PWM***************/		
-		if(dir) pwmval++;
-		  else    pwmval--;
-
- 		if(pwmval>900)dir=0;
-		if(pwmval==0)dir=1;									 
-		LED0_PWM_VAL=pwmval;
-		
-		pwm_disp[0]=pwmval/100+0x30;           //PWM分解
-		pwm_disp[1]=(pwmval/10)%10+0x30;
-		pwm_disp[2]=pwmval%10+0x30;
-		
-		write_12864com(0x98+4);	            //显示在第4行
-		delay_us(200);                    
-		for(i=4;i>0;i--)
+		if(sw)
 		{
-			write_12864data(pwm_disp[4-i]);	    //显示PWM
-			delay_us(200);                      //等待写入
+			PWM_Speed_Control();
 		}
 
 /**********转速*******************/
@@ -63,27 +58,9 @@ int main(void)
 	}	 
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+void PWM_Speed_Control()
+{
+	if(distance<10) alpha=901;
+	else//调速方式未定
+	{}
+}
