@@ -38,6 +38,8 @@ int main(void)
 		if(sw)
 		{
 			PWM_Speed_Control();
+			if(distance<5) GPIOE->ODR|=0x00000010;//距离过近，蜂鸣器报警
+			else GPIOE->ODR&=0xFFFFFFEF;//消除报警
 		}
 
 /**********转速*******************/
