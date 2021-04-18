@@ -9,7 +9,6 @@ void TIM3_IRQHandler(void)
 { 		    		  			    
 	if(TIM3->SR&0X0001)//溢出中断
 	{
-		force=Get_Adc(ADC_CH2);
 	  	timer_50ms++;    
 	  	if(timer_50ms>=20)  
 	  	{
@@ -20,15 +19,27 @@ void TIM3_IRQHandler(void)
 	}				   
 	TIM3->SR&=~(1<<0);//清除中断标志位 	    
 }
+
 //定时器4中断服务程序	 
 void TIM4_IRQHandler(void)
 { 		    		  			    
 	if(TIM4->SR&0X0001)//溢出中断
 	{
-	 status++; 	  	
+		status++; 	  	
 	}				   
 	TIM4->SR&=~(1<<0);//清除中断标志位 	    
 }
+
+//定时器5中断服务程序
+void TIM5_IRQHandler(void)
+{
+	if(TIM5->SR&0x0001)
+	{
+		force=Get_Adc(ADC_CH2);
+	}
+	TIM5->SR&=~(1<<0);
+}
+
 //通用定时器中断初始化
 //这里时钟选择为APB1的2倍，而APB1为36M
 //arr：自动重装值。
@@ -57,15 +68,13 @@ void Timer4_Init(u16 arr,u16 psc)
   MY_NVIC_Init(1,3,TIM4_IRQChannel,2);//抢占1，子优先级3，组2
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
+void Timer5_Init(u16 arr,u16 psc)
+{
+	RCC->APB1ENR|=1<<3;
+	TIM5->ARR=arr;
+	TIM5->PSC=psc;
+	TIM5->DIER|=1<<0;
+	TIM5->DIER|=1<<6;
+	TIM5->CR1|=0x01;
+	MY_NVIC_Init(2,3,TIM5_IRQChannel,2);
+}

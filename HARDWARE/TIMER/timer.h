@@ -4,27 +4,6 @@
 
 void Timer3_Init(u16 arr,u16 psc);
 void Timer4_Init(u16 arr,u16 psc);
+void Timer5_Init(u16 arr,u16 psc);
+
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
