@@ -1,10 +1,10 @@
 /************************************************************
- * ??????IRS
- * ?????
- * PA????J3
- * PB????J3
- * PD?LCDJ2
- * PE????J2
+ * 智能倒车系统IRS
+ * 硬件连接：
+ * PA：电机板J3
+ * PB：LED板J3
+ * PC：超声波J2
+ * PD：LCDJ2
 *************************************************************/
 
 #include "CONFIG.H"	 	 
@@ -12,8 +12,8 @@
 #define CSB_TX PCout(8)         // PC8 ??????????????????? 
 #define BEEN   PCout(10)				// ?????????????????
 
-//
-u16 force=0,start=0;//??????force??????????sw
+//变量定义
+u16 force=0,start=0,mode=0;//mode=1则踏板控制，mode=0则距离控制
 u16 time=0,speed=0,alpha=901;//time???????????speed?????alpha?????
 u8 spd[7]={0},i,showforce[6];      //use to show speed
 u32   status=0,val,real_time;						      // ???????????????????????
@@ -23,15 +23,16 @@ u8    ShowDistance[7] = { 0 };				// ?????????????????????
 
 
 //????????????
-void PWM_Speed_Control(void);//?????????????
-void tran(void); 					      // ?????????????????????
-void Displayspd(void);      //??????
-void DisplayDis(float value);       //??????
-void Display_force(void);  //?????????
+void PWM_Speed_Control(void);//电机转速控制
+void tran(void);//超声波函数
+void Displayspd(void);//显示速度
+void DisplayDis(float value);//显示距离
+void Display_force(void);//显示踏板力度
+void Display(void);//LCD显示函数
 
 int main(void)
 {
-	//???????
+	//初始化
  	Stm32_Clock_Init(9);  //????????????
 	delay_init(72);	      //???????????
 	uart_init(72,9600);   //??????????? 
@@ -44,32 +45,24 @@ int main(void)
 	Timer5_Init(10000,7199);
 	LED_Init();
 
-    Display_string(0,0,"智能倒车系统");
   	while(1)
 	{
  		delay_ms(10);
 
-		start=(GPIOB->IDR&0x0100)>>7;//????
-	    /******************??????****************/		
-		//Display_string(0,0,"??????");
-		if(start) Display_string(7,0,"?");
-			else Display_string(7,0,"?");
+		start=(GPIOB->IDR>>8)&0x0001;//获取开关
+		mode=(GPIOB->IDR>>9)&0x0001;//获取模式
 			
 		if(start)
 		{
-			tran();		//????????????
+			tran();
 			PWM_Speed_Control();
 
 			//when distanse belows to 3,warning!
 			if (dis<10&&dis!=0) BEEN=1;
-			else BEEN=0;		
-			if (dis>80) dis=80;		
+			else BEEN=0;
+			if (dis>80) dis=80;
 
-
-			
-			Displayspd();
-			DisplayDis(dis*10);
-			Display_force();
+			Display();
 		}
 
 	}
@@ -95,20 +88,42 @@ void tran(void)
 void PWM_Speed_Control(void)
 {
 	if(dis<10) alpha=901;
-	else if(dis>30)//????????????
-	{
-		alpha=200;
-	}
+	else if(dis>30) alpha=200;
 	else
 	{
-		alpha=-35*dis+700;//change number to control the distense
+		if(mode) alpha=900-force/7;//mode=1则为踏板模式
+		else alpha=-35*dis+700;//mode=2为距离模式
 	}
 	LED0_PWM_VAL=alpha;
 }
 
+void Display(void)
+{
+	if(start)
+	{
+		Display_string(0,0,"  智能倒车系统  ");
+
+		if(mode) Display_string(0,1,"踏板模式  ");
+		else Display_string(0,1,"距离模式  ");
+
+		if(dis<10) Display_string(5,1,"已停车");
+		else Display_string(5,1,"未停车");
+
+		DisplayDis(dis*10);
+		Display_force();
+	}
+	else
+	{
+		Display_string(0,0,"                ");
+		Display_string(0,1,"  智能倒车系统  ");
+		Display_string(0,2,"                ");
+		Display_string(0,3,"          未开机");
+	}
+}
+
 void Displayspd(void)
 {
-	Display_string(0,1,"??");
+	Display_string(0,1,"速度");
 	spd[0]=speed/100+0x30;           //????
 	spd[1]=(speed/10)%10+0x30;
 	spd[2]=speed%10+0x30;
@@ -120,7 +135,7 @@ void Displayspd(void)
 
 void DisplayDis(float value)
 {
-	Display_string(0,2,"??");
+	Display_string(0,2,"  距离    ");
     val=(u32)value;
     ShowDistance[0] = (val/100)+48;
     ShowDistance[1] = (val%100)/10+48;
@@ -133,7 +148,7 @@ void DisplayDis(float value)
 
 void Display_force()
 {
-	Display_string(0,3,"?????"); 
+	Display_string(0,3,"踏板力度  "); 
 	showforce[0] = force/1000+'0';
 	showforce[1] = (force/100)%10+'0';
 	showforce[2] = (force/10)%10+'0';
