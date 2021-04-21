@@ -28,6 +28,7 @@ void tran(void);//超声波函数
 void Displayspd(void);//显示速度
 void DisplayDis(float value);//显示距离
 void Display_force(void);//显示踏板力度
+void Display(void);//LCD显示函数
 
 int main(void)
 {
@@ -44,16 +45,12 @@ int main(void)
 	Timer5_Init(10000,7199);
 	LED_Init();
 
-    Display_string(0,0,"智能倒车系统    ");
   	while(1)
 	{
  		delay_ms(10);
 
 		start=(GPIOB->IDR>>8)&0x0001;//获取开关
 		mode=(GPIOB->IDR>>9)&0x0001;//获取模式
-	    /*****************显示系统是否开启*****************/		
-		if(start) Display_string(7,0,"■");
-		else Display_string(7,0,"□");
 			
 		if(start)
 		{
@@ -65,9 +62,7 @@ int main(void)
 			else BEEN=0;
 			if (dis>80) dis=80;
 
-			Displayspd();
-			DisplayDis(dis*10);
-			Display_force();
+			Display();
 		}
 
 	}
@@ -96,15 +91,39 @@ void PWM_Speed_Control(void)
 	else if(dis>30) alpha=200;
 	else
 	{
-		if(mode) alpha=900-force/7;
-		else alpha=-35*dis+700;//change number to control the distense
+		if(mode) alpha=900-force/7;//mode=1则为踏板模式
+		else alpha=-35*dis+700;//mode=2为距离模式
 	}
 	LED0_PWM_VAL=alpha;
 }
 
+void Display(void)
+{
+	if(start)
+	{
+		Display_string(0,0,"  智能倒车系统  ");
+
+		if(mode) Display_string(0,1,"踏板模式  ");
+		else Display_string(0,1,"距离模式  ");
+
+		if(dis<10) Display_string(5,1,"已停车");
+		else Display_string(5,1,"未停车");
+
+		DisplayDis(dis*10);
+		Display_force();
+	}
+	else
+	{
+		Display_string(0,0,"                ");
+		Display_string(0,1,"  智能倒车系统  ");
+		Display_string(0,2,"                ");
+		Display_string(0,3,"          未开机");
+	}
+}
+
 void Displayspd(void)
 {
-	Display_string(0,1,"??");
+	Display_string(0,1,"速度");
 	spd[0]=speed/100+0x30;           //????
 	spd[1]=(speed/10)%10+0x30;
 	spd[2]=speed%10+0x30;
@@ -116,7 +135,7 @@ void Displayspd(void)
 
 void DisplayDis(float value)
 {
-	Display_string(0,2,"??");
+	Display_string(0,2,"  距离    ");
     val=(u32)value;
     ShowDistance[0] = (val/100)+48;
     ShowDistance[1] = (val%100)/10+48;
@@ -129,7 +148,7 @@ void DisplayDis(float value)
 
 void Display_force()
 {
-	Display_string(0,3,"?????"); 
+	Display_string(0,3,"踏板力度  "); 
 	showforce[0] = force/1000+'0';
 	showforce[1] = (force/100)%10+'0';
 	showforce[2] = (force/10)%10+'0';
