@@ -1,21 +1,41 @@
 #include "CONFIG.h"
 
-extern u16 time,speed,force;
+extern u16 time,speed,adc,start,mode;
 static u8 timer_50ms=0;
 extern u32 status;
+
+u8 step_s=0,i;
+u8 Step[8][4]={{1,0,0,0},  //A
+			   {1,0,1,0},  //AB
+			   {0,0,1,0},  //B
+			   {0,1,1,0},  //BC
+			   {0,1,0,0},  //C
+			   {0,1,0,1},  //CD
+			   {0,0,0,1},  //D
+			   {1,0,0,1}}; //DA
 
 //定时器3中断服务程序	 
 void TIM3_IRQHandler(void)
 { 		    		  			    
 	if(TIM3->SR&0X0001)//溢出中断
 	{
+		//直流电机
 	  	timer_50ms++;    
 	  	if(timer_50ms>=20)  
 	  	{
 		  	speed = time;
 		  	time = 0;
 		  	timer_50ms = 0;
-	  	}   				   				     	    	
+	  	}
+
+		//步进电机
+		if(start)
+		{
+			for(i=0;i<4;i++)
+				PCout(i)=Step[step_s][i];
+			if(mode) step_s=(step_s+1)%8;
+			else step_s=7-((8-step_s)%8);
+		}
 	}				   
 	TIM3->SR&=~(1<<0);//清除中断标志位 	    
 }
@@ -35,7 +55,7 @@ void TIM5_IRQHandler(void)
 {
 	if(TIM5->SR&0x0001)
 	{
-		force=Get_Adc(ADC_CH2);
+		adc=Get_Adc(ADC_CH2);
 	}
 	TIM5->SR&=~(1<<0);
 }

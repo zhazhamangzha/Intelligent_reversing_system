@@ -1,10 +1,11 @@
 /************************************************************
- * 智能倒车系统IRS
+ * 叉车模拟系统
  * 硬件连接：
  * PA：电机板J3
  * PB：LED板J3
  * PC：超声波J2
  * PD：LCDJ2
+ * PE：电机板J2
 *************************************************************/
 
 #include "CONFIG.H"	 	 
@@ -13,9 +14,9 @@
 #define BEEN   PCout(10)				// ?????????????????
 
 //变量定义
-u16 force=0,start=0,mode=0;//mode=1则踏板控制，mode=0则距离控制
+u16 adc=0,start=0,mode=0;//mode=1则向下，mode=0则向上
 u16 time=0,speed=0,alpha=901;//time???????????speed?????alpha?????
-u8 spd[7]={0},i,showforce[6];      //use to show speed
+u8 spd[7]={0},showadc[10];      //use to show speed
 u32   status=0,val,real_time;						      // ???????????????????????
 char  s2[10], s1[10];						// LCD????????????????
 float	dis;                      // ???????????
@@ -27,7 +28,7 @@ void PWM_Speed_Control(void);//电机转速控制
 void tran(void);//超声波函数
 void Displayspd(void);//显示速度
 void DisplayDis(float value);//显示距离
-void Display_force(void);//显示踏板力度
+void Display_adc(void);//显示货物重量
 void Display(void);//LCD显示函数
 
 int main(void)
@@ -40,10 +41,11 @@ int main(void)
 	EXTIX_Init();         //????????????
 	Adc_Init();           //ADC start
 	Init_12864();         // ???????????
-	Timer3_Init(500,7199);//10Khz?????????????????????500?50ms  
-  Timer4_Init(10, 71);  // 1Mhz?????????????????????10?10us  
-	Timer5_Init(10000,7199);
+	STEP_Init();
 	LED_Init();
+	Timer3_Init(500,7199);//10Khz?????????????????????500?50ms  
+	Timer4_Init(10, 71);  // 1Mhz?????????????????????10?10us  
+	Timer5_Init(10000,7199);
 
   	while(1)
 	{
@@ -91,15 +93,7 @@ void PWM_Speed_Control(void)
 {
 	if(dis<10) alpha=901;
 	else if(dis>30) alpha=200;
-	else
-	{
-		if(mode)//mode=1则为踏板模式
-		{
-			if(force<=3000) alpha=700-1*force/5;
-			else alpha=250-1*force/20;
-		}
-		else alpha=-35*dis+700;//mode=2为距离模式
-	}
+	else alpha=-35*dis+700;
 	LED0_PWM_VAL=alpha;
 }
 
@@ -107,28 +101,17 @@ void Display(void)
 {
 	if(start)
 	{
-		Display_string(0,0,"  智能倒车系统  ");
-
-		if(mode)
-		{
-			Display_string(0,1,"踏板模式  ");
-			Display_force();
-		}
-		else
-		{
-			Display_string(0,1,"距离模式  ");
-			DisplayDis(dis*10);
-		}
-
-		if(dis<10) Display_string(5,1,"已停车");
-		else Display_string(5,1,"未停车");
-
+		Display_string(0,0,"叉车模拟系统    ");
+		if(mode) Display_string(7,0,"↓");
+		else Display_string(7,0,"↑");
 		Displayspd();
+		DisplayDis(dis*10);
+		Display_adc();
 	}
 	else
 	{
 		Display_string(0,0,"                ");
-		Display_string(0,1,"  智能倒车系统  ");
+		Display_string(0,1,"  叉车模拟系统  ");
 		Display_string(0,2,"                ");
 		Display_string(0,3,"          未开机");
 	}
@@ -136,19 +119,19 @@ void Display(void)
 
 void Displayspd(void)
 {
-	Display_string(0,3,"  速度    ");
+	Display_string(0,1,"  速度    ");
 	spd[0]=speed/100+'0';           //????
 	spd[1]=(speed/10)%10+'0';
 	spd[2]=speed%10+'0';
 	spd[3]='r';
 	spd[4]='/';
 	spd[5]='s';
-	Display_string(5,3,spd);
+	Display_string(5,1,spd);
 }
 
 void DisplayDis(float value)
 {
-	Display_string(0,2,"  距离    ");
+	Display_string(0,2,"离地距离  ");
     val=(u32)value;
     ShowDistance[0] = (val/100)+48;
     ShowDistance[1] = (val%100)/10+48;
@@ -159,14 +142,16 @@ void DisplayDis(float value)
 	Display_string(5,2,ShowDistance);
 }
 
-void Display_force(void)
+void Display_adc(void)//显示货物重量
 {
-	Display_string(0,2,"踏板力度  "); 
-	showforce[0] = force/1000+'0';
-	showforce[1] = (force/100)%10+'0';
-	showforce[2] = (force/10)%10+'0';
-	showforce[3] = '.';
-	showforce[4] = (force%10)+'0';
-	showforce[5] = 'N';
-	Display_string(5,2,showforce);
+	Display_string(0,3,"货物重量  "); 
+	showadc[0] = ' ';
+	showadc[1] = adc/1000+'0';
+	showadc[2] = (adc/100)%10+'0';
+	showadc[3] = (adc/10)%10+'0';
+	showadc[4] = '.';
+	showadc[5] = (adc%10)+'0';
+	showadc[6] = 'k';
+	showadc[7] = 'g';
+	Display_string(4,3,showadc);
 }
