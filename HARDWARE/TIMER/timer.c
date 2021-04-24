@@ -32,7 +32,7 @@ void TIM3_IRQHandler(void)
 		if(start)
 		{
 			for(i=0;i<4;i++)
-				PCout(i)=Step[step_s][i];
+				PEout(i)=Step[step_s][i];
 			if(mode) step_s=(step_s+1)%8;
 			else step_s=7-((8-step_s)%8);
 		}

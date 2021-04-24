@@ -66,6 +66,7 @@ int main(void)
 			else BEEN=0;
 			if (dis>80) dis=80;
 		}
+		else LED0_PWM_VAL=901;
 		
 		Display();
 
