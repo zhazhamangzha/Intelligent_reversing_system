@@ -41,7 +41,7 @@ int main(void)
 	Adc_Init();           //ADC start
 	Init_12864();         // ???????????
 	Timer3_Init(500,7199);//10Khz?????????????????????500?50ms  
-    Timer4_Init(10, 71);  // 1Mhz?????????????????????10?10us  
+  Timer4_Init(10, 71);  // 1Mhz?????????????????????10?10us  
 	Timer5_Init(10000,7199);
 	LED_Init();
 
@@ -49,8 +49,10 @@ int main(void)
 	{
  		delay_ms(10);
 
-		start=(GPIOB->IDR>>8)&0x0001;//获取开关
-		mode=(GPIOB->IDR>>9)&0x0001;//获取模式
+		start=(GPIOB->IDR>>11)&0x0001;//获取开关
+		//start=PBin(11);
+		mode=(GPIOB->IDR>>15)&0x0001;//获取模式
+		//mode=PBin(15);
 			
 		if(start)
 		{
@@ -61,9 +63,9 @@ int main(void)
 			if (dis<10&&dis!=0) BEEN=1;
 			else BEEN=0;
 			if (dis>80) dis=80;
-
-			Display();
 		}
+		
+		Display();
 
 	}
 }
@@ -91,7 +93,11 @@ void PWM_Speed_Control(void)
 	else if(dis>30) alpha=200;
 	else
 	{
-		if(mode) alpha=900-force/7;//mode=1则为踏板模式
+		if(mode)//mode=1则为踏板模式
+		{
+			if(force<=3000) alpha=700-1*force/5;
+			else alpha=250-1*force/20;
+		}
 		else alpha=-35*dis+700;//mode=2为距离模式
 	}
 	LED0_PWM_VAL=alpha;
@@ -103,14 +109,21 @@ void Display(void)
 	{
 		Display_string(0,0,"  智能倒车系统  ");
 
-		if(mode) Display_string(0,1,"踏板模式  ");
-		else Display_string(0,1,"距离模式  ");
+		if(mode)
+		{
+			Display_string(0,1,"踏板模式  ");
+			Display_force();
+		}
+		else
+		{
+			Display_string(0,1,"距离模式  ");
+			DisplayDis(dis*10);
+		}
 
 		if(dis<10) Display_string(5,1,"已停车");
 		else Display_string(5,1,"未停车");
 
-		DisplayDis(dis*10);
-		Display_force();
+		Displayspd();
 	}
 	else
 	{
@@ -123,14 +136,14 @@ void Display(void)
 
 void Displayspd(void)
 {
-	Display_string(0,1,"速度");
-	spd[0]=speed/100+0x30;           //????
-	spd[1]=(speed/10)%10+0x30;
-	spd[2]=speed%10+0x30;
+	Display_string(0,3,"  速度    ");
+	spd[0]=speed/100+'0';           //????
+	spd[1]=(speed/10)%10+'0';
+	spd[2]=speed%10+'0';
 	spd[3]='r';
 	spd[4]='/';
 	spd[5]='s';
-	Display_string(5,1,spd);
+	Display_string(5,3,spd);
 }
 
 void DisplayDis(float value)
@@ -146,13 +159,14 @@ void DisplayDis(float value)
 	Display_string(5,2,ShowDistance);
 }
 
-void Display_force()
+void Display_force(void)
 {
-	Display_string(0,3,"踏板力度  "); 
+	Display_string(0,2,"踏板力度  "); 
 	showforce[0] = force/1000+'0';
 	showforce[1] = (force/100)%10+'0';
 	showforce[2] = (force/10)%10+'0';
-	showforce[3] = (force%10)+'0';
-	showforce[4] = 'N';
-	Display_string(5,3,showforce);
+	showforce[3] = '.';
+	showforce[4] = (force%10)+'0';
+	showforce[5] = 'N';
+	Display_string(5,2,showforce);
 }
