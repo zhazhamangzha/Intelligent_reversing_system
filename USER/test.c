@@ -14,7 +14,7 @@
 #define BEEN   PCout(10)				// ?????????????????
 
 //变量定义
-u16 adc=0,start=0,mode=0;//mode=1则向下，mode=0则向上
+u16 adc=0,start=0,mode=0,sw=0;//mode=1则向下，mode=0则向上
 u16 time=0,speed=0,alpha=901;//time???????????speed?????alpha?????
 u8 spd[7]={0},showadc[10];      //use to show speed
 u32   status=0,val,real_time;						      // ???????????????????????
@@ -47,6 +47,12 @@ int main(void)
 	Timer4_Init(10, 71);  // 1Mhz?????????????????????10?10us  
 	Timer5_Init(10000,7199);
 
+	
+	clnGDR_12864();
+	Display_QRcode();
+	delay_ms(1000);
+	clnGDR_12864();
+
   	while(1)
 	{
  		delay_ms(10);
@@ -55,6 +61,7 @@ int main(void)
 		//start=PBin(11);
 		mode=(GPIOB->IDR>>15)&0x0001;//获取模式
 		//mode=PBin(15);
+		sw=(GPIOB->IDR>>13)&0x0001;
 			
 		if(start)
 		{
@@ -66,7 +73,11 @@ int main(void)
 			else BEEN=0;
 			if (dis>80) dis=80;
 		}
-		else LED0_PWM_VAL=901;
+		else
+		{
+			BEEN=0;
+			LED0_PWM_VAL=901;
+		}
 		
 		Display();
 
@@ -100,6 +111,21 @@ void PWM_Speed_Control(void)
 
 void Display(void)
 {
+	if(sw)
+	{
+		Display_string(0,0,"                ");
+		Display_string(0,1,"                ");
+		Display_string(0,2,"                ");
+		Display_string(0,3,"                ");
+		Display_QRcode();
+		while(1)
+		{
+			sw=(GPIOB->IDR>>13)&0x0001;
+			if(!sw) break;
+			delay_ms(10);
+		}
+	}
+	clnGDR_12864();
 	if(start)
 	{
 		Display_string(0,0,"叉车模拟系统    ");

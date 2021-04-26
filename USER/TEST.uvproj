@@ -486,6 +486,11 @@
               <FileType>1</FileType>
               <FilePath>..\HARDWARE\STEP\step.c</FilePath>
             </File>
+            <File>
+              <FileName>pic.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\LCD\pic.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
