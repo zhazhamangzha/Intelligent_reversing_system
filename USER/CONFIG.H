@@ -16,5 +16,7 @@
 	#include "timer.h"
 	#include "adc.h"
 	#include "led.h"
+	#include "step.h"
+	#include "pic.h"
 
 #endif
