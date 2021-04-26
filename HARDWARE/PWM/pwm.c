@@ -7,7 +7,7 @@ void PWM_Init(u16 arr,u16 psc)
 {		 					
 	RCC->APB1ENR|=1<<0; //TIM2时钟使能   
  
-  GPIOA->CRL&=0XFFFFFF0F;
+  	GPIOA->CRL&=0XFFFFFF0F;
 	GPIOA->CRL|=0X000000B0;//PA1设置为复用功能推挽输出模式（速率50Mhz）
 	GPIOA->ODR|=1<<1;//PA1上拉初始化
 

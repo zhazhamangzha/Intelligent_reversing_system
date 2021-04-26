@@ -20,7 +20,7 @@ void EXTI9_5_IRQHandler(void)
     real_time = status ;
     dis=(float)real_time*1.7/10-2;       // 计算距离	定时10us，S=Vt/2（减2是误差补尝）
    
-	  EXTI->PR=1<<9;  //清除LINE9_5上的中断标志位  
+	EXTI->PR=1<<9;  //清除LINE9_5上的中断标志位  
 }
 
 //外部中断初始化程序
@@ -34,7 +34,7 @@ void EXTIX_Init(void)
 			   
 	GPIOA->ODR|=1<<0;	   //PA0
 
-	Ex_NVIC_Config(GPIO_A,0,RTIR);//shangsheng沿触发
+	Ex_NVIC_Config(GPIO_A,0,RTIR);//上升沿触发
 
 	MY_NVIC_Init(2,3,EXTI0_IRQChannel,2);    //抢占2，子优先级3，组2 
 

@@ -1,5 +1,6 @@
 #include "CONFIG.h"	 
 
+//图片字模数组，由字模软件生成
 unsigned char QR_code[1024] = {
 0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,
 0X7F,0XE7,0X11,0X80,0XC3,0XE3,0X8F,0XFC,0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,
@@ -70,47 +71,45 @@ unsigned char QR_code[1024] = {
 //清空GDRAM,总共就是写1KB的0x00。
 void clnGDR_12864(void)
 {
-  u8 j,k;
-  write_12864com(0x34);      //在写GDRAM的地址之前一定要打开扩充指令集
-                           //否则地址写不进去！！
+	u8 j,k;
+	write_12864com(0x34);//开启扩充指令集
 
-  for( j = 0 ; j < 32 ; j++ )
-  {
-   
-    write_12864com(0x80 + j) ;    //写Y坐标
-    write_12864com(0x80) ;        //写X坐标
-  
-    for( k = 0 ; k < 32 ; k++ ) //写一整行数据
-    {
-     write_12864data( 0x00 );
-    }
-  }
-  write_12864com(0x30);  
+  	for(j=0;j<32;j++)
+  	{
+		write_12864com(0x80+j);//写Y坐标
+    	write_12864com(0x80);//写X坐标
+
+    	for(k=0;k<32;k++)//写一整行数据
+    	{
+    		write_12864data( 0x00 );
+    	}
+  	}
+  	write_12864com(0x30);//开启基本指令集
 }
 
+//图片显示函数
 void Display_picture(unsigned char *p)
 {
     unsigned char i,j,k;
-	  u16 lcdx=0x80,lcdy=0x80;
-	  write_12864com(0x34);
-	  for(i=0;i<2;i++)
-	  {
+	u16 lcdx=0x80,lcdy=0x80;//初始X坐标，Y坐标
+	write_12864com(0x34);//开启扩充指令集
+	for(i=0;i<2;i++)//分上下半屏写入
+	{
 	  	for(j=0;j<32;j++)
 		  {
-			  write_12864com(lcdy+j);
-			  write_12864com(lcdx);
-			  for(k=0;k<16;k++)
-			  {
-          write_12864data(*p++);
-        }
+			write_12864com(lcdy+j);
+			write_12864com(lcdx);
+			for(k=0;k<16;k++)
+          		write_12864data(*p++);//写入数据
 		}
-		lcdx=0x88;
+		lcdx=0x88;//换到下半屏X坐标
 	}
-	write_12864com(0x36);
-	write_12864com(0x30);
+	write_12864com(0x36);//显示GDRAM中的图片
+	write_12864com(0x30);//开启基本指令集
 }
 
+//显示二维码
 void Display_QRcode(void)
 {
-	Display_picture(QR_code);
+	Display_picture(QR_code);//显示二维码
 }
