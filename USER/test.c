@@ -1,93 +1,93 @@
 /************************************************************
- * ²æ³µÄ£ÄâÏµÍ³
- * Ó²¼şÁ¬½Ó£º
- * PA£ºµç»ú°åJ3
- * PB£ºLED°åJ3
- * PC£º³¬Éù²¨J2
- * PD£ºLCDJ2
- * PE£ºµç»ú°åJ2
+ * å‰è½¦æ¨¡æ‹Ÿç³»ç»Ÿ
+ * ç¡¬ä»¶è¿æ¥ï¼š
+ * PAï¼šç”µæœºæ¿J3
+ * PBï¼šLEDæ¿J3
+ * PCï¼šè¶…å£°æ³¢J2
+ * PDï¼šLCDJ2
+ * PEï¼šç”µæœºæ¿J2
 *************************************************************/
 
 #include "CONFIG.H"
 
 #define CSB_TX PCout(8)         //PC8
-#define BEEN   PCout(10)				//PC10³¬Éù²¨·äÃùÆ÷
+#define BEEN   PCout(10)				//PC10è¶…å£°æ³¢èœ‚é¸£å™¨
 
-//±äÁ¿¶¨Òå
-u16 adc=0,start=0,mode=0,sw=0;//adcÎªÄ£ÄâÁ¿£¬start±íÊ¾ÏµÍ³ÊÇ·ñ¿ª¹Ø£¬mode±íÊ¾×ª¶¯·½Ïò£¬swÎª¶şÎ¬ÂëÍ¼Æ¬ÏÔÊ¾¿ª¹Ø
-u16 time=0,speed=0,alpha=901;//timeÎªÖ±Á÷µç»úÔËĞĞ¼ÆÊı£¬speedÎªÖ±Á÷µç»úËÙ¶È£¬aphlaÉèÖÃTIM2->CCR2µÄÖµ¿ØÖÆÕ¼¿Õ±È
-u8 spd[7]={0},showadc[10],ShowDistance[7];//spdÎªÏÔÊ¾ËÙ¶ÈµÄ×Ö·ûÊı×é£¬showadcÎªÏÔÊ¾adcµÄÊı×é£¬showDistanceÎªÏÔÊ¾¾àÀëµÄ×Ö·ûÊı×é
-u32 status=0,val,real_time;//status¼ÇÂ¼³¬Éù²¨Ê±¼ä£¬valÊÇÏÔÊ¾º¯ÊıÖµ£¬real_timeÎª³¬Éù²¨Ïà¹Ø±äÁ¿
-float dis;//dis±íÊ¾»ñÈ¡µ½µÄ¾àÀë
+//å˜é‡å®šä¹‰
+u16 adc=0,start=0,mode=0,sw=0;//adcä¸ºæ¨¡æ‹Ÿé‡ï¼Œstartè¡¨ç¤ºç³»ç»Ÿæ˜¯å¦å¼€å…³ï¼Œmodeè¡¨ç¤ºè½¬åŠ¨æ–¹å‘ï¼Œswä¸ºäºŒç»´ç å›¾ç‰‡æ˜¾ç¤ºå¼€å…³
+u16 time=0,speed=0,alpha=901;//timeä¸ºç›´æµç”µæœºè¿è¡Œè®¡æ•°ï¼Œspeedä¸ºç›´æµç”µæœºé€Ÿåº¦ï¼Œaphlaè®¾ç½®TIM2->CCR2çš„å€¼æ§åˆ¶å ç©ºæ¯”
+u8 spd[7]={0},showadc[10],ShowDistance[7];//spdä¸ºæ˜¾ç¤ºé€Ÿåº¦çš„å­—ç¬¦æ•°ç»„ï¼Œshowadcä¸ºæ˜¾ç¤ºadcçš„æ•°ç»„ï¼ŒshowDistanceä¸ºæ˜¾ç¤ºè·ç¦»çš„å­—ç¬¦æ•°ç»„
+u32 status=0,val,real_time;//statusè®°å½•è¶…å£°æ³¢æ—¶é—´ï¼Œvalæ˜¯æ˜¾ç¤ºå‡½æ•°å€¼ï¼Œreal_timeä¸ºè¶…å£°æ³¢ç›¸å…³å˜é‡
+float dis;//disè¡¨ç¤ºè·å–åˆ°çš„è·ç¦»
 
 
-//º¯ÊıÉùÃ÷
-void PWM_Speed_Control(void);//µç»ú×ªËÙ¿ØÖÆº¯Êı
-void tran(void);//³¬Éù²¨º¯Êı
-void Displayspd(void);//ÏÔÊ¾ËÙ¶È
-void DisplayDis(float value);//ÏÔÊ¾¾àÀë
-void Display_adc(void);//ÏÔÊ¾»õÎïÖØÁ¿
-void Display(void);//LCDÏÔÊ¾º¯Êı
+//å‡½æ•°å£°æ˜
+void PWM_Speed_Control(void);//ç”µæœºè½¬é€Ÿæ§åˆ¶å‡½æ•°
+void tran(void);//è¶…å£°æ³¢å‡½æ•°
+void Displayspd(void);//æ˜¾ç¤ºé€Ÿåº¦
+void DisplayDis(float value);//æ˜¾ç¤ºè·ç¦»
+void Display_adc(void);//æ˜¾ç¤ºè´§ç‰©é‡é‡
+void Display(void);//LCDæ˜¾ç¤ºå‡½æ•°
 
 int main(void)
 {
-	//³õÊ¼»¯
- 	Stm32_Clock_Init(9);//ÏµÍ³Ê±ÖÓÉèÖÃ
-	delay_init(72);//ÑÓÊ±³õÊ¼»¯
-	uart_init(72,9600);//´®¿Ú³õÊ¼»¯ 
-	PWM_Init(900,0);//PWM³õÊ¼»¯
-	EXTIX_Init();//Íâ²¿ÖĞ¶Ï³õÊ¼»¯
-	Adc_Init();//ADC³õÊ¼»¯
-	Init_12864();//LCD12864³õÊ¼»¯
-	STEP_Init();//²½½øµç»ú³õÊ¼»¯
-	LED_Init();//LED°å³õÊ¼»¯
-	Timer3_Init(500,7199);//10khz·ÖÆµ£¬¼ÆÊıµ½500Îª50ms
-	Timer4_Init(10, 71); //1Mhz·ÖÆµ£¬¼ÆÊıµ½10Îª10us
-	Timer5_Init(10000,7199);//10khz·ÖÆµ£¬¼ÆÊıµ½10000Îª1s
+	//åˆå§‹åŒ–
+ 	Stm32_Clock_Init(9);//ç³»ç»Ÿæ—¶é’Ÿè®¾ç½®
+	delay_init(72);//å»¶æ—¶åˆå§‹åŒ–
+	uart_init(72,9600);//ä¸²å£åˆå§‹åŒ– 
+	PWM_Init(900,0);//PWMåˆå§‹åŒ–
+	EXTIX_Init();//å¤–éƒ¨ä¸­æ–­åˆå§‹åŒ–
+	Adc_Init();//ADCåˆå§‹åŒ–
+	Init_12864();//LCD12864åˆå§‹åŒ–
+	STEP_Init();//æ­¥è¿›ç”µæœºåˆå§‹åŒ–
+	LED_Init();//LEDæ¿åˆå§‹åŒ–
+	Timer3_Init(500,7199);//10khzåˆ†é¢‘ï¼Œè®¡æ•°åˆ°500ä¸º50ms
+	Timer4_Init(10, 71); //1Mhzåˆ†é¢‘ï¼Œè®¡æ•°åˆ°10ä¸º10us
+	Timer5_Init(10000,7199);//10khzåˆ†é¢‘ï¼Œè®¡æ•°åˆ°10000ä¸º1s
 
-	//ÏµÍ³¿ª»úÏÔÊ¾1sÍ¼Æ¬
-	clnGDR_12864();//ÇåÆÁ
-	Display_QRcode();//ÏÔÊ¾Í¼Æ¬
+	//ç³»ç»Ÿå¼€æœºæ˜¾ç¤º1så›¾ç‰‡
+	clnGDR_12864();//æ¸…å±
+	Display_QRcode();//æ˜¾ç¤ºå›¾ç‰‡
 	delay_ms(1000);
-	clnGDR_12864();//ÇåÆÁ
+	clnGDR_12864();//æ¸…å±
 
-	//Ö÷³ÌĞò
+	//ä¸»ç¨‹åº
   	while(1)
 	{
  		delay_ms(10);
 
-		start=(GPIOB->IDR>>11)&0x0001;//»ñÈ¡ÏµÍ³¿ª¹Ø
-		mode=(GPIOB->IDR>>15)&0x0001;//»ñÈ¡ÔË×ª·½Ïò
-		sw=(GPIOB->IDR>>13)&0x0001;//»ñÈ¡Í¼Æ¬ÏÔÊ¾¿ª¹Ø
+		start=(GPIOB->IDR>>11)&0x0001;//è·å–ç³»ç»Ÿå¼€å…³
+		mode=(GPIOB->IDR>>15)&0x0001;//è·å–è¿è½¬æ–¹å‘
+		sw=(GPIOB->IDR>>13)&0x0001;//è·å–å›¾ç‰‡æ˜¾ç¤ºå¼€å…³
 
-		if(start)//ÏµÍ³¿ªÆô
+		if(start)//ç³»ç»Ÿå¼€å¯
 		{
 			tran();
 			PWM_Speed_Control();
 
-			//¾àÀëĞ¡ÓÚ10ÔòÊ¹ÄÜ·äÃùÆ÷
+			//è·ç¦»å°äº10åˆ™ä½¿èƒ½èœ‚é¸£å™¨
 			if (dis<10&&dis!=0) BEEN=1;
 			else BEEN=0;
 			if (dis>80) dis=80;
 		}
-		else//ÏµÍ³¹Ø±Õ
+		else//ç³»ç»Ÿå…³é—­
 		{
-			BEEN=0;//Í£Ö¹·äÃùÆ÷
-			LED0_PWM_VAL=901;//Í£Ö¹Ö±Á÷µç»ú×ª¶¯
+			BEEN=0;//åœæ­¢èœ‚é¸£å™¨
+			LED0_PWM_VAL=901;//åœæ­¢ç›´æµç”µæœºè½¬åŠ¨
 		}
 
-		Display();//ÏÔÊ¾
+		Display();//æ˜¾ç¤º
 	}
 }
 
-//³¬Éù²¨º¯Êı
+//è¶…å£°æ³¢å‡½æ•°
 void tran(void)
 {
 	u8 i;
-	TIM4->CR1 |= 0x01;//Ê¹ÄÜ¶¨Ê±Æ÷4
-	TIM4->SR &= ~(1 << 0);//Ïû³ıÖĞ¶Ï±êÖ¾Î»
-	status = 0;//¶¨Ê±Æ÷×´Ì¬Çå0
-	for (i = 0; i < 8; i++)//·¢ËÍĞÅºÅ 41.67kHz
+	TIM4->CR1 |= 0x01;//ä½¿èƒ½å®šæ—¶å™¨4
+	TIM4->SR &= ~(1 << 0);//æ¶ˆé™¤ä¸­æ–­æ ‡å¿—ä½
+	status = 0;//å®šæ—¶å™¨çŠ¶æ€æ¸…0
+	for (i = 0; i < 8; i++)//å‘é€ä¿¡å· 41.67kHz
 	{
 		CSB_TX = 1;
 		delay_us(12);
@@ -97,60 +97,60 @@ void tran(void)
 	delay_ms(10);
 }
 
-//µç»ú×ªËÙ¿ØÖÆº¯Êı
+//ç”µæœºè½¬é€Ÿæ§åˆ¶å‡½æ•°
 void PWM_Speed_Control(void)
 {
-	if(dis<10) alpha=901;//Èô¾àÀëĞ¡ÓÚ0£¬µç»úÍ£×ª
-	else if(dis>30) alpha=200;//¾àÀë´óÓÚ30ÔòÔÈËÙ×ª¶¯
-	else alpha=-35*dis+700;//¸ù¾İ¾àÀë¿ØÖÆ×ªËÙ
-	LED0_PWM_VAL=alpha;//¸Ä±äTIM2->CCR2
+	if(dis<10) alpha=901;//è‹¥è·ç¦»å°äº10ï¼Œç”µæœºåœè½¬
+	else if(dis>30) alpha=200;//è·ç¦»å¤§äº30åˆ™åŒ€é€Ÿè½¬åŠ¨
+	else alpha=-35*dis+700;//æ ¹æ®è·ç¦»æ§åˆ¶è½¬é€Ÿ
+	LED0_PWM_VAL=alpha;//æ”¹å˜TIM2->CCR2
 }
 
-//LCDÏÔÊ¾º¯Êı
+//LCDæ˜¾ç¤ºå‡½æ•°
 void Display(void)
 {
-	if(sw)//Í¼Æ¬ÏÔÊ¾¿ª¹Ø¿ªÆô
+	if(sw)//å›¾ç‰‡æ˜¾ç¤ºå¼€å…³å¼€å¯
 	{
-		//ÇåÀíÎÄ×Ö
+		//æ¸…ç†æ–‡å­—
 		Display_string(0,0,"                ");
 		Display_string(0,1,"                ");
 		Display_string(0,2,"                ");
 		Display_string(0,3,"                ");
 
-		Display_QRcode();//ÏÔÊ¾Í¼Æ¬
-		while(1)//Ñ­»·¶ÁÈ¡¿ª¹ØÖ±µ½Í¼Æ¬ÏÔÊ¾¿ª¹Ø¹Ø±Õ
+		Display_QRcode();//æ˜¾ç¤ºå›¾ç‰‡
+		while(1)//å¾ªç¯è¯»å–å¼€å…³ç›´åˆ°å›¾ç‰‡æ˜¾ç¤ºå¼€å…³å…³é—­
 		{
 			sw=(GPIOB->IDR>>13)&0x0001;
-			if(!sw) break;//Èô¿ª¹Ø¹Ø±ÕÔòÌø³öÑ­»·
+			if(!sw) break;//è‹¥å¼€å…³å…³é—­åˆ™è·³å‡ºå¾ªç¯
 			delay_ms(10);
 		}
 	}
 
-	clnGDR_12864();//ÇåÀíÍ¼Æ¬
-	if(start)//ÏµÍ³¿ª¹Ø¿ªÆô£¬ÏÔÊ¾ÏµÍ³Ãû³Æ¡¢ÔË×ª·½Ïò£¬ËÙ¶È¡¢¾àÀë¡¢»õÎïÖØÁ¿(adc)
+	clnGDR_12864();//æ¸…ç†å›¾ç‰‡
+	if(start)//ç³»ç»Ÿå¼€å…³å¼€å¯ï¼Œæ˜¾ç¤ºç³»ç»Ÿåç§°ã€è¿è½¬æ–¹å‘ï¼Œé€Ÿåº¦ã€è·ç¦»ã€è´§ç‰©é‡é‡(adc)
 	{
-		Display_string(0,0,"²æ³µÄ£ÄâÏµÍ³    ");
-		if(mode) Display_string(7,0,"¡ı");
-		else Display_string(7,0,"¡ü");
+		Display_string(0,0,"å‰è½¦æ¨¡æ‹Ÿç³»ç»Ÿ    ");
+		if(mode) Display_string(7,0,"â†“");
+		else Display_string(7,0,"â†‘");
 		Displayspd();
 		DisplayDis(dis*10);
 		Display_adc();
 	}
-	else//ÏµÍ³ÏÔÊ¾¿ª¹Ø¹Ø±Õ£¬ÏÔÊ¾ÏµÍ³Ãû³Æ¼°¡°Î´¿ª»ú¡±
+	else//ç³»ç»Ÿæ˜¾ç¤ºå¼€å…³å…³é—­ï¼Œæ˜¾ç¤ºç³»ç»Ÿåç§°åŠâ€œæœªå¼€æœºâ€
 	{
 		Display_string(0,0,"                ");
-		Display_string(0,1,"  ²æ³µÄ£ÄâÏµÍ³  ");
+		Display_string(0,1,"  å‰è½¦æ¨¡æ‹Ÿç³»ç»Ÿ  ");
 		Display_string(0,2,"                ");
-		Display_string(0,3,"          Î´¿ª»ú");
+		Display_string(0,3,"          æœªå¼€æœº");
 	}
 }
 
-//ÏÔÊ¾ËÙ¶È
+//æ˜¾ç¤ºé€Ÿåº¦
 void Displayspd(void)
 {
-	Display_string(0,1,"  ËÙ¶È    ");
+	Display_string(0,1,"  é€Ÿåº¦    ");
 
-	//½«ËÙ¶ÈÖµ×ª»»Îª×Ö·ûÊı×é²¢ÏÔÊ¾
+	//å°†é€Ÿåº¦å€¼è½¬æ¢ä¸ºå­—ç¬¦æ•°ç»„å¹¶æ˜¾ç¤º
 	spd[0]=speed/100+'0';
 	spd[1]=(speed/10)%10+'0';
 	spd[2]=speed%10+'0';
@@ -160,13 +160,13 @@ void Displayspd(void)
 	Display_string(5,1,spd);
 }
 
-//ÏÔÊ¾¾àÀë
+//æ˜¾ç¤ºè·ç¦»
 void DisplayDis(float value)
 {
-	Display_string(0,2,"ÀëµØ¾àÀë  ");
+	Display_string(0,2,"ç¦»åœ°è·ç¦»  ");
 
-	//½«¾àÀëÖµ×ª»»Îª×Ö·ûÊı×é²¢ÏÔÊ¾
-    val=(u32)value;//½«valueÖµ×ªÎªÕûĞÍ·½±ã²Ù×÷
+	//å°†è·ç¦»å€¼è½¬æ¢ä¸ºå­—ç¬¦æ•°ç»„å¹¶æ˜¾ç¤º
+    val=(u32)value;//å°†valueå€¼è½¬ä¸ºæ•´å‹æ–¹ä¾¿æ“ä½œ
     ShowDistance[0] = (val/100)+48;
     ShowDistance[1] = (val%100)/10+48;
 	ShowDistance[2] = '.';
@@ -176,12 +176,12 @@ void DisplayDis(float value)
 	Display_string(5,2,ShowDistance);
 }
 
-//ÏÔÊ¾»õÎïÖØÁ¿
+//æ˜¾ç¤ºè´§ç‰©é‡é‡
 void Display_adc(void)
 {
-	Display_string(0,3,"»õÎïÖØÁ¿  "); 
+	Display_string(0,3,"è´§ç‰©é‡é‡  "); 
 
-	//½«adcÖµ×ª»»Îª×Ö·ûÊı×é²¢ÏÔÊ¾	
+	//å°†adcå€¼è½¬æ¢ä¸ºå­—ç¬¦æ•°ç»„å¹¶æ˜¾ç¤º	
 	showadc[0] = ' ';
 	showadc[1] = adc/1000+'0';
 	showadc[2] = (adc/100)%10+'0';
